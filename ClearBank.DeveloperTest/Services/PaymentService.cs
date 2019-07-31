@@ -5,29 +5,16 @@ namespace ClearBank.DeveloperTest.Services
 {
     public class PaymentService : IPaymentService
     {
-        private IAccountDataStore _accountDataStore;
-        private readonly IAppConfiguration _configuration;
+        private readonly IAccountDataStore _accountDataStore;
 
-        public PaymentService(IAccountDataStore accountDataStore, IAppConfiguration configuration)
+        public PaymentService(IAccountDataStore accountDataStore)
         {
             _accountDataStore = accountDataStore;
-            _configuration = configuration;
         }
 
         public MakePaymentResult MakePayment(MakePaymentRequest request)
         {
-            string dataStoreType = _configuration.DataStoreType;
-
-            if (dataStoreType == "Backup")
-            {
-                _accountDataStore = new BackupAccountDataStore();
-            }
-            else
-            {
-                _accountDataStore = new AccountDataStore();
-
-            }
-            Account account = _accountDataStore.GetAccount(request.DebtorAccountNumber);
+            var account = _accountDataStore.GetAccount(request.DebtorAccountNumber);
             var result = ValidatePayment(request, account);
 
             if (result.Success)
