@@ -47,7 +47,9 @@
     <Compile Include="Services\AccountService.cs" />
     <Compile Include="Services\AppConfiguration.cs" />
     <Compile Include="Services\AccountDataStoreFactory.cs" />
+    <Compile Include="Services\BacsPaymentValidation.cs" />
     <Compile Include="Services\IAccountService.cs" />
+    <Compile Include="Services\IPaymentValidator.cs" />
     <Compile Include="Services\Resources.cs" />
     <Compile Include="Services\IAccountDataStore.cs" />
     <Compile Include="Services\IAppConfiguration.cs" />

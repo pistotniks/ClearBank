@@ -32,15 +32,7 @@ namespace ClearBank.DeveloperTest.Services
             switch (request.PaymentScheme)
             {
                 case PaymentScheme.Bacs:
-                    if (account == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!account.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.Bacs))
-                    {
-                        result.Success = false;
-                    }
-
+                    result.Success = new BacsPaymentValidation().IsPaymentValid(account, request.Amount);
                     break;
 
                 case PaymentScheme.FasterPayments:
