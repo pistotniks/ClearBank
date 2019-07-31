@@ -1,5 +1,4 @@
-﻿using ClearBank.DeveloperTest.Data;
-using ClearBank.DeveloperTest.Types;
+﻿using ClearBank.DeveloperTest.Types;
 
 namespace ClearBank.DeveloperTest.Services
 {
@@ -40,19 +39,7 @@ namespace ClearBank.DeveloperTest.Services
                     break;
 
                 case PaymentScheme.Chaps:
-                    if (account == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!account.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.Chaps))
-                    {
-                        result.Success = false;
-                    }
-                    else if (account.Status != AccountStatus.Live)
-                    {
-                        result.Success = false;
-                    }
-
+                    result.Success = new ChapsPaymentValidation().IsPaymentValid(account, request.Amount);
                     break;
             }
 
