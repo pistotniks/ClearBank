@@ -8,20 +8,20 @@ namespace ClearBank.DeveloperTest.Tests
 {
     public class PaymentServiceShould
     {
-        private readonly Mock<IAccountDataStore> _accountDataStore;
+        private readonly Mock<IAccountService> _accountService;
         private readonly PaymentService _paymentService;
 
         public PaymentServiceShould()
         {
-            _accountDataStore = new Mock<IAccountDataStore>();
-            _paymentService = new PaymentService(_accountDataStore.Object);
+            _accountService = new Mock<IAccountService>();
+            _paymentService = new PaymentService(_accountService.Object);
         }
 
         [Theory]
         [InlineData(AllowedPaymentSchemes.Bacs, PaymentScheme.Bacs, 3, 1, AccountStatus.Disabled)]
         [InlineData(AllowedPaymentSchemes.FasterPayments, PaymentScheme.FasterPayments, 3, 1, AccountStatus.Disabled)]
         [InlineData(AllowedPaymentSchemes.Chaps, PaymentScheme.Chaps, 3, 1, AccountStatus.Live)]
-        public void MakePaymentAndUpdateAccountWithDeductedBalance_GivenValidAccountAndAnyPaymentSchemeAndValidRequest(
+        public void MakePaymentAndUpdateAccount_GivenValidAccountAndAnyPaymentSchemeAndValidRequest(
             AllowedPaymentSchemes paymentSchemes, PaymentScheme requestedPaymentScheme, decimal accountBalance, decimal requestedAmount, AccountStatus accountStatus)
         {
             var validAccount = new Account
@@ -30,15 +30,18 @@ namespace ClearBank.DeveloperTest.Tests
                 Balance = accountBalance,
                 Status = accountStatus
             };
-            _accountDataStore
-                .Setup(validator => validator.GetAccount(It.IsAny<string>()))
+            _accountService
+                .Setup(service => service.GetAccount(It.IsAny<string>()))
                 .Returns(validAccount);
+
             var paymentRequest = new MakePaymentRequest {Amount = requestedAmount, PaymentScheme = requestedPaymentScheme};
 
             var result = _paymentService.MakePayment(paymentRequest);
 
             result.Success.Should().BeTrue();
-            validAccount.Balance.Should().Be(accountBalance - requestedAmount);
+            _accountService .Verify(service => service.UpdateAccount(
+                    It.IsAny<Account>(), 
+                    It.IsAny<decimal>()), Times.Once);
         }
 
         [Theory]
@@ -49,14 +52,17 @@ namespace ClearBank.DeveloperTest.Tests
             PaymentScheme requestedPaymentScheme, decimal requestedAmount)
         {
             Account noAccount = null;
-            _accountDataStore
-                .Setup(validator => validator.GetAccount(It.IsAny<string>()))
+            _accountService
+                .Setup(service => service.GetAccount(It.IsAny<string>()))
                 .Returns(noAccount);
             var paymentRequest = new MakePaymentRequest {Amount = requestedAmount, PaymentScheme = requestedPaymentScheme};
 
             var result = _paymentService.MakePayment(paymentRequest);
 
             result.Success.Should().BeFalse();
+            _accountService.Verify(service => service.UpdateAccount(
+                It.IsAny<Account>(),
+                It.IsAny<decimal>()), Times.Never);
         }
 
         [Theory]
@@ -72,15 +78,17 @@ namespace ClearBank.DeveloperTest.Tests
                 Balance = accountBalance,
                 Status = accountStatus
             };
-            _accountDataStore
-                .Setup(validator => validator.GetAccount(It.IsAny<string>()))
+            _accountService
+                .Setup(service => service.GetAccount(It.IsAny<string>()))
                 .Returns(validAccount);
             var paymentRequest = new MakePaymentRequest { Amount = requestedAmount, PaymentScheme = requestedPaymentScheme };
 
             var result = _paymentService.MakePayment(paymentRequest);
 
             result.Success.Should().BeFalse();
-            validAccount.Balance.Should().Be(accountBalance);
+            _accountService.Verify(service => service.UpdateAccount(
+                It.IsAny<Account>(),
+                It.IsAny<decimal>()), Times.Never);
         }
 
         [Fact]
@@ -94,15 +102,17 @@ namespace ClearBank.DeveloperTest.Tests
                 Balance = accountBalance,
                 Status = AccountStatus.Live
             };
-            _accountDataStore
-                .Setup(validator => validator.GetAccount(It.IsAny<string>()))
+            _accountService
+                .Setup(service => service.GetAccount(It.IsAny<string>()))
                 .Returns(validAccount);
             var paymentRequest = new MakePaymentRequest { Amount = tooHighRequestedAmount, PaymentScheme = PaymentScheme.FasterPayments };
 
             var result = _paymentService.MakePayment(paymentRequest);
 
             result.Success.Should().BeFalse();
-            validAccount.Balance.Should().Be(accountBalance);
+            _accountService.Verify(service => service.UpdateAccount(
+                It.IsAny<Account>(),
+                It.IsAny<decimal>()), Times.Never);
         }
 
         [Fact]
@@ -114,15 +124,17 @@ namespace ClearBank.DeveloperTest.Tests
                 Balance = 1,
                 Status = AccountStatus.Disabled
             };
-            _accountDataStore
-                .Setup(validator => validator.GetAccount(It.IsAny<string>()))
+            _accountService
+                .Setup(service => service.GetAccount(It.IsAny<string>()))
                 .Returns(validAccount);
             var paymentRequest = new MakePaymentRequest { Amount = 1, PaymentScheme = PaymentScheme.Chaps };
 
             var result = _paymentService.MakePayment(paymentRequest);
 
             result.Success.Should().BeFalse();
-            validAccount.Balance.Should().Be(1);
+            _accountService.Verify(service => service.UpdateAccount(
+                It.IsAny<Account>(),
+                It.IsAny<decimal>()), Times.Never);
         }
 
     }

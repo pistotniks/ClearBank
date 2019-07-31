@@ -5,22 +5,21 @@ namespace ClearBank.DeveloperTest.Services
 {
     public class PaymentService : IPaymentService
     {
-        private readonly IAccountDataStore _accountDataStore;
+        private readonly IAccountService _accountService;
 
-        public PaymentService(IAccountDataStore accountDataStore)
+        public PaymentService(IAccountService accountService)
         {
-            _accountDataStore = accountDataStore;
+            _accountService = accountService;
         }
 
         public MakePaymentResult MakePayment(MakePaymentRequest request)
         {
-            var account = _accountDataStore.GetAccount(request.DebtorAccountNumber);
+            var account = _accountService.GetAccount(request.DebtorAccountNumber);
             var result = ValidatePayment(request, account);
 
             if (result.Success)
             {
-                account.Balance -= request.Amount;
-                _accountDataStore.UpdateAccount(account);
+                _accountService.UpdateAccount(account, request.Amount);
             }
 
             return result;
