@@ -36,19 +36,7 @@ namespace ClearBank.DeveloperTest.Services
                     break;
 
                 case PaymentScheme.FasterPayments:
-                    if (account == null)
-                    {
-                        result.Success = false;
-                    }
-                    else if (!account.AllowedPaymentSchemes.HasFlag(AllowedPaymentSchemes.FasterPayments))
-                    {
-                        result.Success = false;
-                    }
-                    else if (account.Balance < request.Amount)
-                    {
-                        result.Success = false;
-                    }
-
+                    result.Success = new FasterPaymentsValidation().IsPaymentValid(account, request.Amount);
                     break;
 
                 case PaymentScheme.Chaps:
