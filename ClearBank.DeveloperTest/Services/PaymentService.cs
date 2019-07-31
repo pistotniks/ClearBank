@@ -6,7 +6,7 @@ namespace ClearBank.DeveloperTest.Services
     public class PaymentService : IPaymentService
     {
         private IAccountDataStore _accountDataStore;
-        private IAppConfiguration _configuration;
+        private readonly IAppConfiguration _configuration;
 
         public PaymentService(IAccountDataStore accountDataStore, IAppConfiguration configuration)
         {
