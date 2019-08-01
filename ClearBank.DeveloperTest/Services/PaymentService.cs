@@ -16,22 +16,14 @@ namespace ClearBank.DeveloperTest.Services
         public MakePaymentResult MakePayment(MakePaymentRequest request)
         {
             var account = _accountService.GetAccount(request.DebtorAccountNumber);
-            var result = ValidatePayment(request, account);
 
-            if (result.Success)
+            if (_paymentsValidationService.ValidatePayment(account, request.Amount, request.PaymentScheme))
             {
                 _accountService.UpdateAccount(account, request.Amount);
+                return MakePaymentResult.OK();
             }
 
-            return result;
-        }
-
-        private MakePaymentResult ValidatePayment(MakePaymentRequest request, Account account)
-        {
-            return new MakePaymentResult
-            {
-                Success = _paymentsValidationService.ValidatePayment(account, request.Amount, request.PaymentScheme)
-            };
+            return MakePaymentResult.Fail();
         }
     }
 }
