@@ -9,12 +9,14 @@ namespace ClearBank.DeveloperTest.Tests
     public class PaymentServiceShould
     {
         private readonly Mock<IAccountService> _accountService;
+        private readonly IPaymentsValidationService _paymentsValidationService;
         private readonly PaymentService _paymentService;
 
         public PaymentServiceShould()
         {
             _accountService = new Mock<IAccountService>();
-            _paymentService = new PaymentService(_accountService.Object);
+            _paymentsValidationService = new PaymentsValidationService(new PaymentValidatorFactory());
+            _paymentService = new PaymentService(_accountService.Object, _paymentsValidationService);
         }
 
         [Theory]

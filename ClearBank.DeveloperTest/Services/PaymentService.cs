@@ -5,10 +5,12 @@ namespace ClearBank.DeveloperTest.Services
     public class PaymentService : IPaymentService
     {
         private readonly IAccountService _accountService;
+        private readonly IPaymentsValidationService _paymentsValidationService;
 
-        public PaymentService(IAccountService accountService)
+        public PaymentService(IAccountService accountService, IPaymentsValidationService paymentsValidationService)
         {
             _accountService = accountService;
+            _paymentsValidationService = paymentsValidationService;
         }
 
         public MakePaymentResult MakePayment(MakePaymentRequest request)
@@ -24,11 +26,12 @@ namespace ClearBank.DeveloperTest.Services
             return result;
         }
 
-        private static MakePaymentResult ValidatePayment(MakePaymentRequest request, Account account)
+        private MakePaymentResult ValidatePayment(MakePaymentRequest request, Account account)
         {
-            var result = new MakePaymentResult();
-            result.Success = new PaymentsValidationService(new PaymentValidatorFactory()).ValidatePayment(account, request.Amount, request.PaymentScheme);
-            return result;
+            return new MakePaymentResult
+            {
+                Success = _paymentsValidationService.ValidatePayment(account, request.Amount, request.PaymentScheme)
+            };
         }
     }
 }
