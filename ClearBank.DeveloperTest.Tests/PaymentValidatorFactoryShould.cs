@@ -32,6 +32,5 @@ namespace ClearBank.DeveloperTest.Tests
 
             paymentValidator.Should().BeOfType(type);
         }
-
     }
 }

@@ -51,8 +51,10 @@
     <Compile Include="Services\ChapsPaymentValidation.cs" />
     <Compile Include="Services\FasterPaymentsValidation.cs" />
     <Compile Include="Services\IAccountService.cs" />
+    <Compile Include="Services\IPaymentsValidationService.cs" />
     <Compile Include="Services\IPaymentValidator.cs" />
     <Compile Include="Services\IPaymentValidatorFactory.cs" />
+    <Compile Include="Services\PaymentsValidationService.cs" />
     <Compile Include="Services\PaymentValidatorFactory.cs" />
     <Compile Include="Services\Resources.cs" />
     <Compile Include="Services\IAccountDataStore.cs" />

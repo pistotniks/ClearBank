@@ -27,8 +27,7 @@ namespace ClearBank.DeveloperTest.Services
         private static MakePaymentResult ValidatePayment(MakePaymentRequest request, Account account)
         {
             var result = new MakePaymentResult();
-            result.Success = new PaymentValidatorFactory().CreateValidator(request.PaymentScheme)
-                .IsPaymentValid(account, request.Amount);
+            result.Success = new PaymentsValidationService(new PaymentValidatorFactory()).ValidatePayment(account, request.Amount, request.PaymentScheme);
             return result;
         }
     }

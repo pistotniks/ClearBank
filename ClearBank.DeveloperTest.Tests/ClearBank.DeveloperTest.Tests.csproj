@@ -80,6 +80,7 @@
     <Compile Include="ChapsPaymentValidationShould.cs" />
     <Compile Include="FasterPaymentsValidationShould.cs" />
     <Compile Include="PaymentServiceShould.cs" />
+    <Compile Include="PaymentsValidationServiceShould.cs" />
     <Compile Include="PaymentValidatorFactoryShould.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
