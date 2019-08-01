@@ -9,135 +9,72 @@ namespace ClearBank.DeveloperTest.Tests
     public class PaymentServiceShould
     {
         private readonly Mock<IAccountService> _accountService;
-        private readonly IPaymentsValidationService _paymentsValidationService;
+        private readonly Mock<IPaymentsValidationService> _paymentsValidationService;
         private readonly PaymentService _paymentService;
 
         public PaymentServiceShould()
         {
             _accountService = new Mock<IAccountService>();
-            _paymentsValidationService = new PaymentsValidationService(new PaymentValidatorFactory());
-            _paymentService = new PaymentService(_accountService.Object, _paymentsValidationService);
+            _paymentsValidationService = new Mock<IPaymentsValidationService>();
+            _paymentService = new PaymentService(_accountService.Object, _paymentsValidationService.Object);
         }
 
-        [Theory]
-        [InlineData(AllowedPaymentSchemes.Bacs, PaymentScheme.Bacs, 3, 1, AccountStatus.Disabled)]
-        [InlineData(AllowedPaymentSchemes.FasterPayments, PaymentScheme.FasterPayments, 3, 1, AccountStatus.Disabled)]
-        [InlineData(AllowedPaymentSchemes.Chaps, PaymentScheme.Chaps, 3, 1, AccountStatus.Live)]
-        public void MakePaymentAndUpdateAccount_GivenValidAccountAndAnyPaymentSchemeAndValidRequest(
-            AllowedPaymentSchemes paymentSchemes, PaymentScheme requestedPaymentScheme, decimal accountBalance, decimal requestedAmount, AccountStatus accountStatus)
+        [Fact]
+        public void MakePaymentWithSuccess_GivenValidPayment()
         {
-            var validAccount = new Account
-            {
-                AllowedPaymentSchemes = paymentSchemes,
-                Balance = accountBalance,
-                Status = accountStatus
-            };
-            _accountService
-                .Setup(service => service.GetAccount(It.IsAny<string>()))
-                .Returns(validAccount);
+            _accountService.Setup(service => service.GetAccount(It.IsAny<string>()))
+                .Returns(new Account());
+            _paymentsValidationService.Setup(service => service.ValidatePayment(It.IsAny<Account>(), It.IsAny<decimal>(), It.IsAny<PaymentScheme>()))
+                .Returns(true);
 
-            var paymentRequest = new MakePaymentRequest {Amount = requestedAmount, PaymentScheme = requestedPaymentScheme};
-
-            var result = _paymentService.MakePayment(paymentRequest);
+            var result = _paymentService.MakePayment(new MakePaymentRequest());
 
             result.Success.Should().BeTrue();
+        }
+
+       [Fact]
+        public void UpdateAccount_GivenValidPayment()
+        {
+            _accountService.Setup(service => service.GetAccount(It.IsAny<string>()))
+                .Returns(new Account());
+            _paymentsValidationService.Setup(service => service.ValidatePayment(It.IsAny<Account>(), It.IsAny<decimal>(), It.IsAny<PaymentScheme>()))
+                .Returns(true);
+
+            _paymentService.MakePayment(new MakePaymentRequest());
+
             _accountService .Verify(service => service.UpdateAccount(
                     It.IsAny<Account>(), 
                     It.IsAny<decimal>()), Times.Once);
         }
 
-        [Theory]
-        [InlineData(PaymentScheme.Bacs, 1)]
-        [InlineData(PaymentScheme.FasterPayments, 1)]
-        [InlineData(PaymentScheme.Chaps, 1)]
-        public void NotMakePaymentAndNotUpdateAccount_GivenNoAccount(
-            PaymentScheme requestedPaymentScheme, decimal requestedAmount)
+        [Fact]
+        public void FailMakingPayment_GivenInvalidPayment()
         {
-            Account noAccount = null;
             _accountService
                 .Setup(service => service.GetAccount(It.IsAny<string>()))
-                .Returns(noAccount);
-            var paymentRequest = new MakePaymentRequest {Amount = requestedAmount, PaymentScheme = requestedPaymentScheme};
+                .Returns(new Account());
+            _paymentsValidationService.Setup(service => service.ValidatePayment(It.IsAny<Account>(), It.IsAny<decimal>(), It.IsAny<PaymentScheme>()))
+                .Returns(false);
 
-            var result = _paymentService.MakePayment(paymentRequest);
-
-            result.Success.Should().BeFalse();
-            _accountService.Verify(service => service.UpdateAccount(
-                It.IsAny<Account>(),
-                It.IsAny<decimal>()), Times.Never);
-        }
-
-        [Theory]
-        [InlineData(AllowedPaymentSchemes.FasterPayments, PaymentScheme.Bacs, 3, 1, AccountStatus.Disabled)]
-        [InlineData(AllowedPaymentSchemes.Chaps, PaymentScheme.FasterPayments, 3, 1, AccountStatus.Disabled)]
-        [InlineData(AllowedPaymentSchemes.Bacs, PaymentScheme.Chaps, 3, 1, AccountStatus.Live)]
-        public void NotMakePaymentAndNotUpdateAccount_GivenAccountDoesNotAllowThePaymentSchemeProvided(
-            AllowedPaymentSchemes paymentSchemes, PaymentScheme requestedPaymentScheme, decimal accountBalance, decimal requestedAmount, AccountStatus accountStatus)
-        {
-            var validAccount = new Account
-            {
-                AllowedPaymentSchemes = paymentSchemes,
-                Balance = accountBalance,
-                Status = accountStatus
-            };
-            _accountService
-                .Setup(service => service.GetAccount(It.IsAny<string>()))
-                .Returns(validAccount);
-            var paymentRequest = new MakePaymentRequest { Amount = requestedAmount, PaymentScheme = requestedPaymentScheme };
-
-            var result = _paymentService.MakePayment(paymentRequest);
+            var result = _paymentService.MakePayment(new MakePaymentRequest());
 
             result.Success.Should().BeFalse();
-            _accountService.Verify(service => service.UpdateAccount(
-                It.IsAny<Account>(),
-                It.IsAny<decimal>()), Times.Never);
         }
 
         [Fact]
-        public void NotMakePaymentAndNotUpdateAccount_GivenFasterPaymentsRequested_And_BalanceIsNotSufficient()
+        public void NotUpdateAccount_GivenInvalidPayment()
         {
-            const decimal accountBalance = 1;
-            const decimal tooHighRequestedAmount = 2;
-            var validAccount = new Account
-            {
-                AllowedPaymentSchemes = AllowedPaymentSchemes.FasterPayments,
-                Balance = accountBalance,
-                Status = AccountStatus.Live
-            };
             _accountService
                 .Setup(service => service.GetAccount(It.IsAny<string>()))
-                .Returns(validAccount);
-            var paymentRequest = new MakePaymentRequest { Amount = tooHighRequestedAmount, PaymentScheme = PaymentScheme.FasterPayments };
+                .Returns(new Account());
+            _paymentsValidationService.Setup(service => service.ValidatePayment(It.IsAny<Account>(), It.IsAny<decimal>(), It.IsAny<PaymentScheme>()))
+                .Returns(false);
 
-            var result = _paymentService.MakePayment(paymentRequest);
+            _paymentService.MakePayment(new MakePaymentRequest());
 
-            result.Success.Should().BeFalse();
             _accountService.Verify(service => service.UpdateAccount(
                 It.IsAny<Account>(),
                 It.IsAny<decimal>()), Times.Never);
         }
-
-        [Fact]
-        public void NotMakePaymentAndNotUpdateAccount_GivenChapsPaymentsRequested_And_AccountStatusIsNotLive()
-        {
-            var validAccount = new Account
-            {
-                AllowedPaymentSchemes = AllowedPaymentSchemes.Chaps,
-                Balance = 1,
-                Status = AccountStatus.Disabled
-            };
-            _accountService
-                .Setup(service => service.GetAccount(It.IsAny<string>()))
-                .Returns(validAccount);
-            var paymentRequest = new MakePaymentRequest { Amount = 1, PaymentScheme = PaymentScheme.Chaps };
-
-            var result = _paymentService.MakePayment(paymentRequest);
-
-            result.Success.Should().BeFalse();
-            _accountService.Verify(service => service.UpdateAccount(
-                It.IsAny<Account>(),
-                It.IsAny<decimal>()), Times.Never);
-        }
-
     }
 }
